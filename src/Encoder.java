@@ -4,10 +4,12 @@
 import java.io.*;
 import java.lang.*;
 import java.util.*;
+import java.util.Scanner;
 
 
 public class Encoder {
 
+    /* Checks the arguments for validity */
     public static boolean parseArgs(String args[]) {
         if (args.length != 2) {
             return false;
@@ -18,21 +20,50 @@ public class Encoder {
         return true;
     }
 
+    /* Finds frequency array for the given file*/
+    public static int[] findFrequencies(File file) throws IOException{
+        int sum = 0;
+        int[] freq = new int[26];
+
+        Scanner sc = new Scanner(file);
+
+        /* Creates the relative frequency array */
+        for (int i = 0; i < 27; i++){
+            if (sc.hasNext())
+                freq[i] = sc.nextInt();
+            else
+                freq[i] = 0;
+            sum += freq[i];
+        }
+
+        /* Divides each element in the array by total sum to find probabilities */
+        for (int i = 0; i < 27; i++) {
+            freq[i] /= sum;
+        }
+        return freq;
+    }
+
     public static void main(String args[]) {
         File file;
         int outputSize;
+        int[] freq = new int[26];
 
+        /* Checks the arguments for validity */
         if (!parseArgs(args)) {
             System.out.println("Invalid argument format");
             return;
         }
 
+        /* Opens file and sets the output size */
         try {
             file = new File(args[0]);
             outputSize = Integer.parseInt(args[1]);
+            freq = findFrequencies(file);
         } catch(Exception e){
             System.out.println("Exception occured when opening file: " + e);
+            return;
         }
+
 
 
     }
