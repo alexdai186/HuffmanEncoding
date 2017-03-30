@@ -28,7 +28,7 @@ public class Encoder {
         Scanner sc = new Scanner(file);
 
         /* Creates the relative frequency array */
-        for (int i = 0; i < 27; i++){
+        for (int i = 0; i < 26; i++){
             if (sc.hasNext())
                 freq[i] = sc.nextInt();
             else
@@ -37,7 +37,7 @@ public class Encoder {
         }
 
         /* Divides each element in the array by total sum to find probabilities */
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 26; i++) {
             freq[i] /= sum;
         }
         return freq;
@@ -64,12 +64,13 @@ public class Encoder {
             return;
         }
 
-        HuffmanTree tree = buildTree(charFreqs, 1);
-        HuffmanTree tree = buildTree(charFreqs, 2);
+        HuffmanCode huffman = new HuffmanCode();
+        HuffmanTree tree = huffman.buildTree(freq, 1);
+        HuffmanTree tree2 = huffman.buildTree(freq, 2);
 
         // print out results
         System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE");
-        printCodes(tree, new StringBuffer());
+        huffman.printCodes(tree, new StringBuffer());
 
     }
 }
