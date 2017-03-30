@@ -64,7 +64,12 @@ public class Encoder {
             return;
         }
 
+        HuffmanTree tree = buildTree(charFreqs, 1);
+        HuffmanTree tree = buildTree(charFreqs, 2);
 
+        // print out results
+        System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE");
+        printCodes(tree, new StringBuffer());
 
     }
 }
