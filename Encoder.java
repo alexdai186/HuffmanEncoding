@@ -9,17 +9,24 @@ public class Encoder {
                                                     "H", "I", "J", "K", "L", "M", "N", "O",
                                                     "P", "Q", "R", "S", "T", "U", "V", "W", 
                                                     "X", "Y", "Z"};
-    // Array to store frequencies of symbols, taken from file. Index = symbol, value = frequencies
+    private static String[] twoSymbolAlphabet = new String[alphabet.length * alphabet.length];
+    // Array to store frequencies of 1-symbols, taken from file. Index = symbol, value = frequencies
     private static int[] freq = new int[alphabet.length];
-    // Array to store probabilities of symbols. Index = symbol, value = probabilities
+    // Array to store probabilities of 1-symbols. Index = symbol, value = probabilities
     private static double[] probs = new double[alphabet.length];
+    
+    // Array to store frequencies of 2-symbols, taken from file. Index = symbol, value = frequencies
+    private static int[] twoSymbolFreq = new int[alphabet.length * alphabet.length];
+    // Array to store probabilities of 2-symbols. Index = symbol, value = probabilities
+    private static double[] twoSymbolProbs = new double[alphabet.length * alphabet.length];
+    
     private static int numberOfSymbols = 0;
     /* Checks the command line arguments for validity */
     public static boolean validArgs(String args[]) {
         return args.length == 2 && args[0].equals("frequenciesFile") && Integer.parseInt(args[1]) > 0;
     }
 
-    public static void createFrequencyAndProbabilityArrays(File file) throws IOException{
+    public static void createFrequencyAndProbabilityArrays(File file) throws IOException {
         int sum = 0;
         int value;
         int index = 0;
@@ -48,7 +55,22 @@ public class Encoder {
         }
         scan.close();
     }
+    // Create 
+    public static void Fill2SymbolAlphabet() {
+        int index = 0;
+        for (int i = 0; i < freq.length; i++) {
+            for (int j = 0; j < freq.length; j++) {
+                // Fill the 2-symbol alphabet programmatically
+                twoSymbolAlphabet[index++] = alphabet[i] + alphabet[j];
+                // Calculate each 2-symbol's frequency
+                twoSymbolFreq[index++] = freq[i] * freq[j];
+            }
+        }
+    }
+    
+    public static void create2SymbolFreqAndProbsArrays() {
 
+    }
     public static void createTestFile(int numCharacters, int[] freq) throws IOException {
         PrintWriter pw = new PrintWriter("testText");
         double[] range = new double[numberOfSymbols];
@@ -98,21 +120,21 @@ public class Encoder {
             file = new File(args[0]);
             createFrequencyAndProbabilityArrays(file);
             createTestFile(Integer.parseInt(args[1]), freq);
+            Fill2SymbolAlphabet();
+            
+            HuffmanTree tree = HuffmanCode.buildTree(freq, 1);
+            HuffmanTree tree2 = HuffmanCode.buildTree(freq, 2);
+
+            // print out results
+            System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE");
+            HuffmanCode.printCodes(tree, new StringBuffer());
+            
+//            System.out.println("----------------------------");
+//            System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE");
+//            HuffmanCode.printCodes(tree2, new StringBuffer());
         } catch(Exception e){
             System.out.println("Exception occurred when opening frequenciesFile: " + e.toString());
             return;
         }
-
-        HuffmanTree tree = HuffmanCode.buildTree(freq, 1);
-        HuffmanTree tree2 = HuffmanCode.buildTree(freq, 2);
-
-        // print out results
-        System.out.println("SYMBOL\tFREQUENCY\tHUFFMAN CODE");
-        HuffmanCode.printCodes(tree, new StringBuffer());
-        
-        System.out.println("----------------------------");
-        System.out.println("SYMBOL\tFREQUENCY\tHUFFMAN CODE");
-        HuffmanCode.printCodes(tree2, new StringBuffer());
-
     }
 }
