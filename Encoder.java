@@ -38,7 +38,7 @@ public class Encoder {
             sum += value;
             numberOfSymbols++;
         }
-        System.out.println("SUM IS: " + sum);
+        // System.out.println("SUM IS: " + sum);
         // The number of symbols might be less than 26, fill the remaining freq array spaces with -1
         while (index < alphabet.length) {
             freq[index++] = -1;
@@ -49,10 +49,10 @@ public class Encoder {
         for (int i = 0; i < alphabet.length; i++) {
             probs[i] = ((double)freq[i]) / sum;
         }
-        // Print out arrays just to check
-        for (int i = 0; i < numberOfSymbols; i++) {
-            System.out.println("probability: " + alphabet[i] + " " + probs[i]);
-        }
+        // // Print out arrays just to check
+        // for (int i = 0; i < numberOfSymbols; i++) {
+        //     System.out.println("probability: " + alphabet[i] + " " + probs[i]);
+        // }
         scan.close();
     }
     // Create 
@@ -86,17 +86,13 @@ public class Encoder {
             for (int i = 1; i < numberOfSymbols; i++) {
                 range[i] = range[i-1] + probs[i];
             }
-            for (int i = 0; i < numberOfSymbols; i++) {
-                System.out.println("range: " + alphabet[i] + " " + range[i]);
-            }
             for (int k = 0; k < numCharacters; k++) {
                 double randomValue = rand.nextDouble();
-                System.out.println("rand: " + randomValue);
                 for (int i = 1; i < numberOfSymbols; i++) {
                     if (randomValue <= range[i]) {
                         // if symbol is within range, stop at the first range you find. print the symbol at that range
                         pw.print(alphabet[i]);
-                        System.out.println(alphabet[i]);
+                        // System.out.println(alphabet[i]);
                         break;
                     }
                 }
@@ -120,7 +116,7 @@ public class Encoder {
             file = new File(args[0]);
             createFrequencyAndProbabilityArrays(file);
             createTestFile(Integer.parseInt(args[1]), freq);
-            Fill2SymbolAlphabet();
+            // Fill2SymbolAlphabet();
             
             HuffmanTree tree = HuffmanCode.buildTree(freq, 1);
             HuffmanTree tree2 = HuffmanCode.buildTree(freq, 2);
