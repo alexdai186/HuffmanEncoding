@@ -1,7 +1,6 @@
 import java.io.*;
 import java.lang.*;
 import java.util.*;
-import java.util.Scanner;
 
 
 public class Encoder {
@@ -16,7 +15,7 @@ public class Encoder {
     private static double[] probs = new double[alphabet.length];
     
     // Array to store frequencies of 2-symbols, taken from file. Index = symbol, value = frequencies
-    private static int[] twoSymbolFreq = new int[alphabet.length * alphabet.length];
+    // private static int[] twoSymbolFreq = new int[alphabet.length * alphabet.length];
     // Array to store probabilities of 2-symbols. Index = symbol, value = probabilities
     private static double[] twoSymbolProbs = new double[alphabet.length * alphabet.length];
     
@@ -55,52 +54,142 @@ public class Encoder {
         // }
         scan.close();
     }
-    // Create 
-    public static void Fill2SymbolAlphabet() {
+    
+    public static void Fill2SymbolAlphabetAndArrays() {
         int index = 0;
-        for (int i = 0; i < freq.length; i++) {
-            for (int j = 0; j < freq.length; j++) {
+        // traverse through the number of symbols in a double for loop to create the 2-symbol alphabet
+        for (int i = 0; i < numberOfSymbols; i++) {
+            for (int j = 0; j < numberOfSymbols; j++) {
                 // Fill the 2-symbol alphabet programmatically
-                twoSymbolAlphabet[index++] = alphabet[i] + alphabet[j];
-                // Calculate each 2-symbol's frequency
-                twoSymbolFreq[index++] = freq[i] * freq[j];
+                twoSymbolAlphabet[index] = alphabet[i] + alphabet[j];
+                // Calculate each 2-symbol's probabilities
+                twoSymbolProbs[index] = probs[i] * probs[j];
+                index++;
             }
         }
     }
-    
-    public static void create2SymbolFreqAndProbsArrays() {
 
-    }
-    public static void createTestFile(int numCharacters, int[] freq) throws IOException {
-        PrintWriter pw = new PrintWriter("testText");
+    public static File createTestFile(int numCharacters, int symbolOrder) throws IOException {
+        File file = new File("testText");
+        PrintWriter pw = new PrintWriter(file);
         double[] range = new double[numberOfSymbols];
+        double[] twoSymbolRange = new double[numberOfSymbols * numberOfSymbols];
         try {
             // randomly generate a double
             Random rand = new Random();
+            double randomValue;
             
             // range array stores the upper bound of probabilities for each symbol
             // EX: if A has prob of 0.15, range stores its own prob 
             // If B has prob of 0.45, then range for B is 0.15 to 0.6 (range of A + p(B)). Range stores 0.6
             // If C has prob of 0.4, then range for C is 0.6 to 1 (range of B + p(C)). Range stores 1
-            range[0] = probs[0];
-            for (int i = 1; i < numberOfSymbols; i++) {
-                range[i] = range[i-1] + probs[i];
-            }
-            for (int k = 0; k < numCharacters; k++) {
-                double randomValue = rand.nextDouble();
+            if (symbolOrder == 1) {
+                range[0] = probs[0];
                 for (int i = 1; i < numberOfSymbols; i++) {
-                    if (randomValue <= range[i]) {
-                        // if symbol is within range, stop at the first range you find. print the symbol at that range
-                        pw.print(alphabet[i]);
-                        // System.out.println(alphabet[i]);
-                        break;
+                    range[i] = range[i-1] + probs[i];
+                }
+                for (int k = 0; k < numCharacters; k++) {
+                    randomValue = rand.nextDouble();
+                    for (int i = 1; i < numberOfSymbols; i++) {
+                        if (randomValue <= range[i]) {
+                            // if symbol is within range, stop at the first range you find. print the symbol at that range
+                            pw.print(alphabet[i]);
+                            // System.out.println(alphabet[i]);
+                            break;
+                        }
                     }
                 }
+            }
+            else {
+                twoSymbolRange[0] = twoSymbolProbs[0];
+                for (int i = 1; i < numberOfSymbols * numberOfSymbols; i++) {
+                    twoSymbolRange[i] = twoSymbolRange[i-1] + twoSymbolProbs[i];
+                }
+                // Check what range looks like
+                for (int i = 0; i < numberOfSymbols * numberOfSymbols; i++) {
+                    System.out.println("range: " + twoSymbolAlphabet[i] + " " + twoSymbolRange[i]);
+                }
+                for (int k = 0; k < numCharacters; k++) {
+                    randomValue = rand.nextDouble();
+                    for (int i = 1; i < numberOfSymbols * numberOfSymbols; i++) {
+                        if (randomValue <= twoSymbolRange[i]) {
+                            // if symbol is within range, stop at the first range you find. print the symbol at that range
+                            pw.print(twoSymbolAlphabet[i]);
+                            // System.out.println(twoSymbolAlphabet[i]);
+                            break;
+                        }
+                    }
+                }   
             }
             pw.close();
         } catch (Exception e) {
             System.out.println("An error occurred while creating test file " + e.toString());
         }
+        return file;
+    }
+
+    // encode the testText symbols into their binary encryptions
+    public static File encode(File testText, int symbolOrder, HuffmanCode huff) throws IOException {
+        File file1 = new File("testText.enc1");
+        File file2 = new File("testText.enc2");
+        PrintWriter pw = new PrintWriter(symbolOrder == 1? file1: file2);
+        Scanner scan = new Scanner(testText);
+        try {
+            // Print binary encryptions into file
+            String line = scan.nextLine();
+            if (symbolOrder == 1) {
+                // encode each 1-symbol
+                for (int i = 0; i < line.length(); i++) {
+                    String symbol = String.valueOf(line.charAt(i));
+                    String prefix = huff.encodes.get(symbol);
+                    pw.print(prefix);
+                }
+            } else {
+                // encode each 2-symbol
+                for (int i = 0; i < line.length() - 1; i+=2) {
+                    String symbol = String.valueOf(line.charAt(i)) + String.valueOf(line.charAt(i + 1));
+                    String prefix = huff.twoSymbolencodes.get(symbol);
+                    pw.print(prefix);
+                }
+            }
+            scan.close();
+            pw.close();
+        } catch (Exception e) {
+            System.out.println("An error occurred while encoding file " + e.toString());
+        }
+        return symbolOrder == 1? file1: file2;
+    }
+    
+    // decode the testText symbols from their binary encryptions
+    public static void decode(File encodedFile, int symbolOrder, HuffmanCode huff) throws IOException {
+        File file1 = new File("testText.dec1");
+        File file2 = new File("testText.dec2");
+        PrintWriter pw = new PrintWriter(symbolOrder == 1? file1: file2);
+        Scanner scan = new Scanner(encodedFile);
+        try {
+            // Print symbols into file
+            String line = scan.nextLine();
+            String prefix = "";
+            String symbol;
+            // decode each 1-symbol
+            for (int i = 0; i < line.length(); i++) {
+                prefix += String.valueOf(line.charAt(i));   // read each bit, add to prefix string
+                if (symbolOrder == 1)
+                    symbol = huff.decodes.get(prefix);
+                else 
+                    symbol = huff.twoSymboldecodes.get(prefix);
+                if (symbol != null) {   // if the binary string is a prefix, print the corresponding symbol
+                    pw.print(symbol);
+                    // reset prefix to prepare for next symbol
+                    prefix = "";
+                }
+            }
+            scan.close();
+            pw.close();
+        } catch (Exception e) {
+            System.out.println("An error occurred while encoding file " + e.toString());
+        }
+//        return symbolOrder == 1? file1: file2;
     }
     public static void main(String args[]) {
         File file;
@@ -115,19 +204,26 @@ public class Encoder {
         try {
             file = new File(args[0]);
             createFrequencyAndProbabilityArrays(file);
-            createTestFile(Integer.parseInt(args[1]), freq);
-            // Fill2SymbolAlphabet();
+            File testText = createTestFile(Integer.parseInt(args[1]), 1); // 1-symbol
+            Fill2SymbolAlphabetAndArrays();
+            File twoSymbolTestText = createTestFile(Integer.parseInt(args[1]), 2); // 2-symbol
             
-            HuffmanTree tree = HuffmanCode.buildTree(freq, 1);
-            HuffmanTree tree2 = HuffmanCode.buildTree(freq, 2);
+            HuffmanCode huff = new HuffmanCode();
+            HuffmanTree tree = huff.buildTree(freq, 1);
+            HuffmanTree tree2 = huff.buildTree(freq, 2);
 
-            // print out results
+            // Call printcodes on 1-symbol, encode it, decode it
             System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE");
-            HuffmanCode.printCodes(tree, new StringBuffer());
-            
-//            System.out.println("----------------------------");
-//            System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE");
-//            HuffmanCode.printCodes(tree2, new StringBuffer());
+            huff.printCodes(tree, new StringBuffer(), 1);
+            File encodedFile = encode(testText, 1, huff);
+            decode(encodedFile, 1, huff);
+            // Call printcodes on 2-symbol, encode it, decode it
+            System.out.println("----------------------------");
+            System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE"); 
+            huff.printCodes(tree2, new StringBuffer(), 2);
+            File encodedFile2 = encode(twoSymbolTestText, 2, huff);
+            decode(encodedFile2, 2, huff);
+
         } catch(Exception e){
             System.out.println("Exception occurred when opening frequenciesFile: " + e.toString());
             return;

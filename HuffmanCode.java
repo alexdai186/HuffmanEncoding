@@ -31,8 +31,12 @@ class HuffmanNode extends HuffmanTree {
 }
 
 public class HuffmanCode {
+    HashMap<String, String> encodes = new HashMap<String, String>();
+    HashMap<String, String> decodes = new HashMap<String, String>();
+    HashMap<String, String> twoSymbolencodes = new HashMap<String, String>();
+    HashMap<String, String> twoSymboldecodes = new HashMap<String, String>();
     // input is an array of frequencies, indexed by character code
-    public static HuffmanTree buildTree(int[] charFreqs, int symbolOrder) {
+    public HuffmanTree buildTree(int[] charFreqs, int symbolOrder) {
         PriorityQueue<HuffmanTree> trees = new PriorityQueue<HuffmanTree>();
         // initially, we have a forest of leaves
         // one for each non-empty character
@@ -40,7 +44,6 @@ public class HuffmanCode {
         /* Change this to account for 1-symbol and 2-symbol */
         if (symbolOrder == 1) {
             for (int i = 0; i < charFreqs.length; i++)
-                // MAKE SURE FREQ IS NOT NEGATIVE, THE EXTRA SPACES IN FREQ ARRAY MAKES FREQ -1
                 if (charFreqs[i] > 0)
                     trees.offer(new HuffmanLeaf(charFreqs[i], String.valueOf((char)(i+65))));
         }
@@ -48,7 +51,6 @@ public class HuffmanCode {
             HashMap<String, Integer> mapFreq = new HashMap<String, Integer>();
             for (int i = 0; i < charFreqs.length; i++) {
                 for (int j = 0; j < charFreqs.length; j++) {
-                    // MAKE SURE FREQ IS NOT NEGATIVE, THE EXTRA SPACES IN FREQ ARRAY MAKES FREQ -1
                     if (charFreqs[i] > 0 && charFreqs[j] > 0)
                         mapFreq.put(String.valueOf((char)(i+65) + String.valueOf((char)(j+65))), (charFreqs[i] * charFreqs[j]));
                 }
@@ -72,24 +74,31 @@ public class HuffmanCode {
         return trees.poll();
     }
 
-    public static void printCodes(HuffmanTree tree, StringBuffer prefix) {
+    public void printCodes(HuffmanTree tree, StringBuffer prefix, int symbolOrder) {
         if (tree instanceof HuffmanLeaf) {
             HuffmanLeaf leaf = (HuffmanLeaf)tree;
 
             // print out character, frequency, and code for this leaf (which is just the prefix)
             System.out.println(leaf.value + "\t" + leaf.frequency + "\t" + prefix);
-
+            if (symbolOrder == 1) {
+                encodes.put(leaf.value, prefix.toString());
+                decodes.put(prefix.toString(), leaf.value);
+            } else {
+                twoSymbolencodes.put(leaf.value, prefix.toString());
+                twoSymboldecodes.put(prefix.toString(), leaf.value);
+            }
+            
         } else if (tree instanceof HuffmanNode) {
             HuffmanNode node = (HuffmanNode)tree;
 
             // traverse left
             prefix.append('0');
-            printCodes(node.left, prefix);
+            printCodes(node.left, prefix, symbolOrder);
             prefix.deleteCharAt(prefix.length()-1);
 
             // traverse right
             prefix.append('1');
-            printCodes(node.right, prefix);
+            printCodes(node.right, prefix, symbolOrder);
             prefix.deleteCharAt(prefix.length()-1);
         }
     }
