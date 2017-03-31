@@ -40,6 +40,7 @@ public class HuffmanCode {
         /* Change this to account for 1-symbol and 2-symbol */
         if (symbolOrder == 1) {
             for (int i = 0; i < charFreqs.length; i++)
+                // MAKE SURE FREQ IS NOT NEGATIVE, THE EXTRA SPACES IN FREQ ARRAY MAKES FREQ -1
                 if (charFreqs[i] > 0)
                     trees.offer(new HuffmanLeaf(charFreqs[i], String.valueOf((char)(i+65))));
         }
@@ -47,10 +48,11 @@ public class HuffmanCode {
             HashMap<String, Integer> mapFreq = new HashMap<String, Integer>();
             for (int i = 0; i < charFreqs.length; i++) {
                 for (int j = 0; j < charFreqs.length; j++) {
-                    mapFreq.put(String.valueOf((char)(i+65) + String.valueOf((char)(j+65))), (charFreqs[i] * charFreqs[j]));
+                    // MAKE SURE FREQ IS NOT NEGATIVE, THE EXTRA SPACES IN FREQ ARRAY MAKES FREQ -1
+                    if (charFreqs[i] > 0 && charFreqs[j] > 0)
+                        mapFreq.put(String.valueOf((char)(i+65) + String.valueOf((char)(j+65))), (charFreqs[i] * charFreqs[j]));
                 }
             }
-
             // add symbols into tree
             for (String symbol: mapFreq.keySet()) {
                 trees.offer(new HuffmanLeaf(mapFreq.get(symbol), symbol));
@@ -71,7 +73,6 @@ public class HuffmanCode {
     }
 
     public static void printCodes(HuffmanTree tree, StringBuffer prefix) {
-        assert tree != null;
         if (tree instanceof HuffmanLeaf) {
             HuffmanLeaf leaf = (HuffmanLeaf)tree;
 

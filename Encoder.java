@@ -103,13 +103,16 @@ public class Encoder {
             return;
         }
 
-        HuffmanCode huffman = new HuffmanCode();
-        HuffmanTree tree = huffman.buildTree(freq, 1);
-        HuffmanTree tree2 = huffman.buildTree(freq, 2);
+        HuffmanTree tree = HuffmanCode.buildTree(freq, 1);
+        HuffmanTree tree2 = HuffmanCode.buildTree(freq, 2);
 
         // print out results
-        System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE");
+        System.out.println("SYMBOL\tFREQUENCY\tHUFFMAN CODE");
         HuffmanCode.printCodes(tree, new StringBuffer());
+        
+        System.out.println("----------------------------");
+        System.out.println("SYMBOL\tFREQUENCY\tHUFFMAN CODE");
+        HuffmanCode.printCodes(tree2, new StringBuffer());
 
     }
 }
