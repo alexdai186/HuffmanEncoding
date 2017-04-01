@@ -13,13 +13,12 @@ public class Encoder {
     private static int[] freq = new int[alphabet.length];
     // Array to store probabilities of 1-symbols. Index = symbol, value = probabilities
     private static double[] probs = new double[alphabet.length];
-    
-    // Array to store frequencies of 2-symbols, taken from file. Index = symbol, value = frequencies
-    // private static int[] twoSymbolFreq = new int[alphabet.length * alphabet.length];
     // Array to store probabilities of 2-symbols. Index = symbol, value = probabilities
     private static double[] twoSymbolProbs = new double[alphabet.length * alphabet.length];
     
     private static int numberOfSymbols = 0;
+    private static HashMap<String, Double> symbolProbs = new HashMap<String, Double>();
+    
     /* Checks the command line arguments for validity */
     public static boolean validArgs(String args[]) {
         return args.length == 2 && args[0].equals("frequenciesFile") && Integer.parseInt(args[1]) > 0;
@@ -37,21 +36,15 @@ public class Encoder {
             sum += value;
             numberOfSymbols++;
         }
-        // System.out.println("SUM IS: " + sum);
         // The number of symbols might be less than 26, fill the remaining freq array spaces with -1
         while (index < alphabet.length) {
             freq[index++] = -1;
         }
-
         // Fill probability array. Divide frequency by sum to find each symbol's probability
         // In extra spaces, there will be negative probabilities. just ignore them
         for (int i = 0; i < alphabet.length; i++) {
             probs[i] = ((double)freq[i]) / sum;
         }
-        // // Print out arrays just to check
-        // for (int i = 0; i < numberOfSymbols; i++) {
-        //     System.out.println("probability: " + alphabet[i] + " " + probs[i]);
-        // }
         scan.close();
     }
     
@@ -64,6 +57,7 @@ public class Encoder {
                 twoSymbolAlphabet[index] = alphabet[i] + alphabet[j];
                 // Calculate each 2-symbol's probabilities
                 twoSymbolProbs[index] = probs[i] * probs[j];
+                symbolProbs.put(twoSymbolAlphabet[index], twoSymbolProbs[index]);
                 index++;
             }
         }
@@ -94,7 +88,6 @@ public class Encoder {
                         if (randomValue <= range[i]) {
                             // if symbol is within range, stop at the first range you find. print the symbol at that range
                             pw.print(alphabet[i]);
-                            // System.out.println(alphabet[i]);
                             break;
                         }
                     }
@@ -104,10 +97,6 @@ public class Encoder {
                 twoSymbolRange[0] = twoSymbolProbs[0];
                 for (int i = 1; i < numberOfSymbols * numberOfSymbols; i++) {
                     twoSymbolRange[i] = twoSymbolRange[i-1] + twoSymbolProbs[i];
-                }
-                // Check what range looks like
-                for (int i = 0; i < numberOfSymbols * numberOfSymbols; i++) {
-                    System.out.println("range: " + twoSymbolAlphabet[i] + " " + twoSymbolRange[i]);
                 }
                 for (int k = 0; k < numCharacters; k++) {
                     randomValue = rand.nextDouble();
@@ -191,6 +180,39 @@ public class Encoder {
         }
 //        return symbolOrder == 1? file1: file2;
     }
+    
+    // Calculate the entropy of each order
+    public static double computeEntropy(int symbolOrder) {
+        double entropy = 0.0;
+        if (symbolOrder == 1) {
+            for (double d: probs) {
+                if (d > 0) 
+                    entropy += d * (Math.log(d)/Math.log(2));
+            }
+        } else {
+            for (double d: twoSymbolProbs) {
+                if (d > 0) 
+                    entropy += d * (Math.log(d)/Math.log(2));
+            }
+        }
+        return entropy*-1;
+    }
+    
+    // average bits per symbol
+    public static  double computeEfficiency(int symbolOrder, HuffmanCode huff) {
+        double numBits = 0;
+        if (symbolOrder == 1) {
+            for (String key: huff.encodes.keySet()) {
+                numBits += huff.encodes.get(key).length() * probs[key.charAt(0)-65];
+            }
+        } else {
+            for (String key: huff.twoSymbolencodes.keySet()) {
+                numBits += huff.twoSymbolencodes.get(key).length() * symbolProbs.get(key);
+            }
+        }
+        return numBits;
+    }
+    
     public static void main(String args[]) {
         File file;
 
@@ -212,17 +234,29 @@ public class Encoder {
             HuffmanTree tree = huff.buildTree(freq, 1);
             HuffmanTree tree2 = huff.buildTree(freq, 2);
 
-            // Call printcodes on 1-symbol, encode it, decode it
+            // Call printcodes on 1-symbol, encode it, decode it, print out its entropy
+            System.out.println("----------------------------");
             System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE");
             huff.printCodes(tree, new StringBuffer(), 1);
             File encodedFile = encode(testText, 1, huff);
             decode(encodedFile, 1, huff);
-            // Call printcodes on 2-symbol, encode it, decode it
+            double entropy1 = computeEntropy(1);
+            System.out.println("Entropy for 1-symbol is " + entropy1);
+            double eff1 = computeEfficiency(1, huff);
+            System.out.println("Efficiency for 1-symbol is " + eff1);
+            System.out.println("Percentage Difference for 1-symbol is " + ((eff1-entropy1)/entropy1) * 100 + "%");
+            
+            // Call printcodes on 2-symbol, encode it, decode it, print out its entropy
             System.out.println("----------------------------");
             System.out.println("SYMBOL\tWEIGHT\tHUFFMAN CODE"); 
             huff.printCodes(tree2, new StringBuffer(), 2);
             File encodedFile2 = encode(twoSymbolTestText, 2, huff);
             decode(encodedFile2, 2, huff);
+            double entropy2 = computeEntropy(2);
+            System.out.println("Entropy for 2-symbol is " + entropy2);
+            double eff2 = computeEfficiency(2, huff);
+            System.out.println("Efficiency for 2-symbol is " + eff2);
+            System.out.println("Percentage Difference for 2-symbol is " + ((eff2-entropy2)/entropy2) * 100 + "%");
 
         } catch(Exception e){
             System.out.println("Exception occurred when opening frequenciesFile: " + e.toString());
